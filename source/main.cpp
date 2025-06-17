@@ -2,16 +2,17 @@
 #include <GarrysMod/Lua/Interface.h>
 #include <GarrysMod/Interfaces.hpp>
 #include <GarrysMod/Lua/LuaInterface.h>
+#include "GameEventListener.h"
 #include <thread>
 
 namespace globals {
 	const char* hostname;
 	const char* mapname;
 	const char* gamemode;
-	int player_count;
-	int max_players;
 	bool discord_initialized;
-	bool update_needed;
+	bool inmenu = true;
+
+	IGameEventManager2* event_mgr;
 
 	GarrysMod::Lua::ILuaBase* lua_g;
 	GarrysMod::Lua::CLuaInterface* lua_interface_g;
@@ -73,6 +74,8 @@ namespace discord {
 			}
 		}).detach();
 
+		globals::discord_initialized = true;
+
 		globals::lua_interface_g->Msg("vltg_ds::discord::init() -> done\n");
 	}
 
@@ -82,30 +85,66 @@ namespace discord {
 			return;
 		}
 
-		if (!globals::update_needed) {
-			return;
-		}
-
 		Discord_ClearPresence();
 
 		char details[128];
 		char state[128];
 		DiscordRichPresence discordPresence;
 		memset(&discordPresence, 0, sizeof(discordPresence));
-		snprintf(details, sizeof(details), "%s [%d/%d]", globals::hostname, globals::player_count, globals::max_players);
+		snprintf(details, sizeof(details), "Playing on %s", globals::hostname);
 		snprintf(state, sizeof(state), "Map: %s | Gamemode: %s", globals::mapname, globals::gamemode);
-		discordPresence.details = globals::hostname == "In Menu" ? globals::hostname : details;
-		discordPresence.state = globals::hostname == "In Menu" ? "" : state;
+		discordPresence.details = globals::inmenu ? "In Menu" : details;
+		discordPresence.state = globals::inmenu ? "" : state;
 		discordPresence.startTimestamp = 0;
 		discordPresence.endTimestamp = time(0) + 5 * 60;
 		discordPresence.largeImageKey = "garrysmod";
 		discordPresence.instance = 0;
 
-		Discord_UpdatePresence(&discordPresence);
+		globals::lua_interface_g->Msg("vltg_ds::discord::update_rpc() -> done\n");
 
-		globals::update_needed = false;
+		Discord_UpdatePresence(&discordPresence);
 	}
 }
+
+class vltg_ds_connectlistener : IGameEventListener2 {
+public:
+	void FireGameEvent(IGameEvent* event) override {
+		if (strncmp(event->GetName(), "server_spawn", 16) == 0) {
+			globals::lua_interface_g->Msg("vltg_ds::firegameevent() -> server_spawn: %s\n", event->GetString("hostname"));
+
+			globals::inmenu = false;
+			globals::hostname = event->GetString("hostname");
+			globals::mapname = event->GetString("mapname");
+			
+			globals::lua_g->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
+			globals::lua_g->GetField(-1, "engine");
+			globals::lua_g->GetField(-1, "ActiveGamemode");
+			globals::lua_g->Call(0, 1);
+
+			globals::gamemode = globals::lua_g->GetString(-1);
+
+			globals::lua_g->Pop(3);
+
+			discord::update_rpc();
+
+			return;
+		}
+
+		if (strncmp(event->GetName(), "client_disconnect", 24) == 0 && event->GetString("message")[0] == '\0') {
+			globals::lua_interface_g->Msg("vltg_ds::firegameevent() -> client_disconnect\n");
+
+			globals::inmenu = true;
+
+			discord::update_rpc();
+
+			return;
+		}
+	}
+};
+
+vltg_ds_connectlistener* event_listener;
+
+static SourceSDK::FactoryLoader engine_loader("engine");
 
 namespace module {
 	static void pre_init() {
@@ -123,129 +162,23 @@ namespace module {
 		globals::lua_g->SetField(GarrysMod::Lua::INDEX_GLOBAL, "vltg_ds");
 	}
 
-	void get_static_values() {
-		{
-			globals::lua_g->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
-			globals::lua_g->GetField(-1, "game");
-			globals::lua_g->GetField(-1, "GetMap");
-			globals::lua_g->Call(0, 1);
-
-			globals::mapname = globals::lua_g->GetString(-1);
-
-			globals::lua_g->Pop(3);
-		}
-
-		{
-			globals::lua_g->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
-			globals::lua_g->GetField(-1, "GetHostName");
-			globals::lua_g->Call(0, 1);
-
-			const char* l_name = globals::lua_g->GetString(-1);
-			if (l_name != globals::hostname) {
-				globals::update_needed = true;
-			}
-
-			globals::hostname = l_name;
-
-			globals::lua_g->Pop(2);
-		}
-
-		{
-			globals::lua_g->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
-			globals::lua_g->GetField(-1, "engine");
-			globals::lua_g->GetField(-1, "ActiveGamemode");
-			globals::lua_g->Call(0, 1);
-
-			globals::gamemode = globals::lua_g->GetString(-1);
-
-			globals::lua_g->Pop(3);
-		}
-
-		{
-			globals::lua_g->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
-			globals::lua_g->GetField(-1, "game");
-			if (!globals::lua_g->IsType(-1, GarrysMod::Lua::Type::Table)) {
-				globals::lua_g->Pop(2);
-				return;
-			}
-			globals::lua_g->GetField(-1, "MaxPlayers");
-			if (!globals::lua_g->IsType(-1, GarrysMod::Lua::Type::Function)) {
-				globals::lua_g->Pop(2);
-				return;
-			}
-			globals::lua_g->Call(0, 1);
-
-			globals::max_players = globals::lua_g->GetNumber(-1);
-
-			globals::lua_g->Pop(3);
-		}
-	}
-
-	void get_dynamic_values() {
-		{
-			globals::lua_g->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
-			globals::lua_g->GetField(-1, "player");
-			if (!globals::lua_g->IsType(-1, GarrysMod::Lua::Type::Table)) {
-				globals::lua_g->Pop(2);
-				return;
-			}
-			globals::lua_g->GetField(-1, "GetCount");
-			if (!globals::lua_g->IsType(-1, GarrysMod::Lua::Type::Function)) {
-				globals::lua_g->Pop(2);
-				return;
-			}
-			globals::lua_g->Call(0, 1);
-
-			int l_count = globals::lua_g->GetNumber(-1);
-			// to avoid unpleasant rpc "flickering" in the discord profile
-			if (l_count != globals::player_count) {
-				globals::update_needed = true;
-			}
-
-			globals::player_count = l_count;
-
-			globals::lua_g->Pop(3);
-		}
-	}
-
-	LUA_FUNCTION_STATIC(update) {
-		get_static_values();
-		get_dynamic_values();
-		discord::update_rpc();
-		return 0;
-	}
-
-	LUA_FUNCTION_STATIC(update_menu) {
-		globals::hostname = "In Menu";
-		globals::mapname = "";
-		globals::player_count = 0;
-		globals::max_players = 0;
-		globals::gamemode = "";
-		globals::update_needed = true;
-
-		discord::update_rpc();
-		return 0;
-	}
-
 	static void init() {
-		globals::lua_g->PushCFunction(update);
-		globals::lua_g->SetField(-2, "update");
-
-		globals::lua_g->PushCFunction(update_menu);
-		globals::lua_g->SetField(-2, "update_menu");
-
-		globals::lua_g->SetField(GarrysMod::Lua::INDEX_GLOBAL, "vltg_ds");
-
-		get_static_values();
+		globals::lua_interface_g->Msg("vltg_ds::init() -> done: event_listener: 0x%p\n", event_listener);
 		discord::init();
-
-		globals::lua_interface_g->Msg("vltg_ds::init() -> done: %s | %s | %s | %d | %d\n", globals::mapname, globals::hostname, globals::gamemode, globals::max_players, globals::player_count);
+		discord::update_rpc();
 	}
 }
 
 GMOD_MODULE_OPEN() {
 	globals::lua_g = LUA;
 	globals::lua_interface_g = (GarrysMod::Lua::CLuaInterface*)LUA;
+	globals::event_mgr = (IGameEventManager2*)engine_loader.GetFactory()(INTERFACEVERSION_GAMEEVENTSMANAGER2, nullptr);
+	if (!globals::event_mgr) {
+		globals::lua_g->ThrowError("failed to initialize event_mgr\n");
+	}
+	event_listener = new vltg_ds_connectlistener();
+	globals::event_mgr->AddListener((IGameEventListener2*)event_listener, "server_spawn", false);
+	globals::event_mgr->AddListener((IGameEventListener2*)event_listener, "client_disconnect", false);
 
 	module::pre_init();
 	module::init();

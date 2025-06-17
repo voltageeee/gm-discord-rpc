@@ -217,9 +217,20 @@ namespace module {
 			return 0;
 		}
 
-
 		get_static_values();
 		get_dynamic_values();
+		discord::update_rpc();
+		return 0;
+	}
+
+	LUA_FUNCTION_STATIC(update_menu) {
+		globals::hostname = "In Menu";
+		globals::mapname = "";
+		globals::player_count = 0;
+		globals::max_players = 0;
+		globals::gamemode = "";
+		globals::update_needed = true;
+
 		discord::update_rpc();
 		return 0;
 	}
@@ -227,6 +238,10 @@ namespace module {
 	static void init() {
 		globals::lua_g->PushCFunction(update);
 		globals::lua_g->SetField(-2, "update");
+
+		globals::lua_g->PushCFunction(update_menu);
+		globals::lua_g->SetField(-2, "update_menu");
+
 		globals::lua_g->SetField(GarrysMod::Lua::INDEX_GLOBAL, "vltg_ds");
 
 		get_static_values();

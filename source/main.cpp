@@ -12,7 +12,6 @@ namespace globals {
 	int max_players;
 	bool discord_initialized;
 	bool update_needed;
-	bool inmenu;
 
 	GarrysMod::Lua::ILuaBase* lua_g;
 	GarrysMod::Lua::CLuaInterface* lua_interface_g;
@@ -54,32 +53,7 @@ namespace discord {
 		return;
 	}
 
-	static void update_rpc() {
-		if (!globals::discord_initialized || !globals::update_needed) {
-			return;
-		}
-
-		Discord_ClearPresence();
-
-		char details[128];
-		char state[128];
-		DiscordRichPresence discordPresence;
-		memset(&discordPresence, 0, sizeof(discordPresence));
-		snprintf(details, sizeof(details), "%s [%d/%d]", globals::hostname, globals::player_count, globals::max_players);
-		snprintf(state, sizeof(state), "Map: %s | Gamemode: %s", globals::mapname, globals::gamemode);
-		discordPresence.details = details;
-		discordPresence.state = state;
-		discordPresence.startTimestamp = 0;
-		discordPresence.endTimestamp = time(0) + 5 * 60;
-		discordPresence.largeImageKey = "garrysmod";
-		discordPresence.instance = 0;
-
-		Discord_UpdatePresence(&discordPresence);
-
-		globals::update_needed = false;
-	}
-
-	void init() {
+	static void init() {
 		static const char* ds_client_id = "1384291447594811534";
 		DiscordEventHandlers handlers;
 		memset(&handlers, 0, sizeof(handlers));
@@ -100,6 +74,36 @@ namespace discord {
 		}).detach();
 
 		globals::lua_interface_g->Msg("vltg_ds::discord::init() -> done\n");
+	}
+
+	static void update_rpc() {
+		if (!globals::discord_initialized) {
+			init();
+			return;
+		}
+
+		if (!globals::update_needed) {
+			return;
+		}
+
+		Discord_ClearPresence();
+
+		char details[128];
+		char state[128];
+		DiscordRichPresence discordPresence;
+		memset(&discordPresence, 0, sizeof(discordPresence));
+		snprintf(details, sizeof(details), "%s [%d/%d]", globals::hostname, globals::player_count, globals::max_players);
+		snprintf(state, sizeof(state), "Map: %s | Gamemode: %s", globals::mapname, globals::gamemode);
+		discordPresence.details = globals::hostname == "In Menu" ? globals::hostname : details;
+		discordPresence.state = globals::hostname == "In Menu" ? "" : state;
+		discordPresence.startTimestamp = 0;
+		discordPresence.endTimestamp = time(0) + 5 * 60;
+		discordPresence.largeImageKey = "garrysmod";
+		discordPresence.instance = 0;
+
+		Discord_UpdatePresence(&discordPresence);
+
+		globals::update_needed = false;
 	}
 }
 
@@ -130,13 +134,6 @@ namespace module {
 
 			globals::lua_g->Pop(3);
 		}
-
-		if (globals::mapname == "menu") {
-			globals::inmenu = true;
-			return;
-		}
-
-		globals::inmenu = false;
 
 		{
 			globals::lua_g->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
@@ -212,11 +209,6 @@ namespace module {
 	}
 
 	LUA_FUNCTION_STATIC(update) {
-		if (globals::inmenu) {
-			get_static_values();
-			return 0;
-		}
-
 		get_static_values();
 		get_dynamic_values();
 		discord::update_rpc();

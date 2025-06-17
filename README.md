@@ -34,5 +34,6 @@ compile with vs2019 toolset
 ```
 
 playing on a server without any related gmsv modules installed:
-![image](https://github.com/user-attachments/assets/df5d4216-8ca9-4820-83a0-d46fb6e0aeeb)
+![image](https://github.com/user-attachments/assets/1d28f0a7-b69f-45ec-b169-19a0fa9c815a)
+
 

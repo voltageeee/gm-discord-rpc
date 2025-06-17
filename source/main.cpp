@@ -61,18 +61,14 @@ namespace discord {
 
 		Discord_ClearPresence();
 
-		char buffer[256];
+		char details[128];
+		char state[128];
 		DiscordRichPresence discordPresence;
 		memset(&discordPresence, 0, sizeof(discordPresence));
-		discordPresence.state = "Playing Garry's Mod";
-		sprintf(buffer, "Server Name: %s | Map Name: %s | Gamemode: %s | Player Count: %d | Max Players: %d",
-			globals::hostname,
-			globals::mapname,
-			globals::gamemode,
-			globals::player_count,
-			globals::max_players
-		);
-		discordPresence.details = buffer;
+		snprintf(details, sizeof(details), "%s [%d/%d]", globals::hostname, globals::player_count, globals::max_players);
+		snprintf(state, sizeof(state), "Map: %s | Gamemode: %s", globals::mapname, globals::gamemode);
+		discordPresence.details = details;
+		discordPresence.state = state;
 		discordPresence.startTimestamp = 0;
 		discordPresence.endTimestamp = time(0) + 5 * 60;
 		discordPresence.largeImageKey = "garrysmod";

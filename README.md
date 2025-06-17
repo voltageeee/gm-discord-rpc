@@ -21,4 +21,6 @@ open projects/windows/vs2019/vltg_ds.sln
 compile with vs2019 toolset
 ```
 
-![image](https://github.com/user-attachments/assets/8dc1567e-33e0-49a5-832a-18c324755e28)
+playing on a server without any related gmsv modules installed:
+![image](https://github.com/user-attachments/assets/df5d4216-8ca9-4820-83a0-d46fb6e0aeeb)
+

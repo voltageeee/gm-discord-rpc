@@ -2,10 +2,14 @@
 a discord rpc garry's mod module that can be used by anyone without the need of installing this on the server
 
 this is made possible by utilizing source engine's event system (initially, i didn't think about it). thanks to the guys from Garry's Mod discord:
+
+
 thanks to wholecream
+
 ![image](https://github.com/user-attachments/assets/c1b9ea54-d8be-4da0-a2bc-3e9054891573)
 
 honorable mention:
+
 ![image](https://github.com/user-attachments/assets/85d090a7-25e1-442d-98e8-9b7a48bf45ae)
 
 

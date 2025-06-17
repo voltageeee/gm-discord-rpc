@@ -6,6 +6,8 @@ this is made possible with gm_rocx by Earu: https://github.com/Earu/gm_rocx, gmo
 # usage
 ```
 download the latest version from the "releases" tab
+download discord-rpc.dll from here: https://github.com/discord/discord-rpc/releases/tag/v3.4.0
+place discord-rpc.dll in your GarrysMod folder, near gmod.exe
 place the lua folder in your garrysmod root directory
 launch discord & garry's mod
 connect to the server

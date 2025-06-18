@@ -1,39 +1,38 @@
-# gm-discord-rpc
-a discord rpc garry's mod module that can be used by anyone without the need of installing this on the server
+# Garry's Mod RPC
+A Garry's Mod binary module that introduces advanced discord's RPC support on any server for any client.
 
-this is made possible by utilizing source engine's event system (initially, i didn't think about it). thanks to the guys from Garry's Mod discord:
+Playing on a random DarkRP server:
 
+![image](https://github.com/user-attachments/assets/d23b567c-25e7-4f54-96d7-d4035622fa04)
 
-thanks to wholecream
+This module works by listening for such events as server_spawn and client_disconnect in order to set the discord rich presence information respectively.
+
+It was very dumb of me to not think about this when I initially began developing this module. Thanks to wholecream in the Garry's Mod discord server for reminding me about that possibility.
 
 ![image](https://github.com/user-attachments/assets/c1b9ea54-d8be-4da0-a2bc-3e9054891573)
 
-honorable mention:
 
-![image](https://github.com/user-attachments/assets/85d090a7-25e1-442d-98e8-9b7a48bf45ae)
+This module is also made with danielga's garrysmod_common:
 
+https://github.com/danielga/garrysmod_common
 
-# usage
+# Usage
 ```
-download the latest version from the "releases" tab
-download discord-rpc.dll from here: https://github.com/discord/discord-rpc/releases/tag/v3.4.0
-place discord-rpc.dll in your GarrysMod folder, near gmod.exe
-place the lua folder in your garrysmod root directory
-launch discord & garry's mod
-connect to the server
-enjoy!
-```
-
-# compiling
-```
-download the latest premake5 and add it to your PATH
-git clone --recurse submodules garrysmod_common by danielga: https://github.com/danielga/garrysmod_common
-run premake5 --gmcommon=path/to/garrysmod_common vs2019 in the project directory
-open projects/windows/vs2019/vltg_ds.sln
-compile with vs2019 toolset
+Download the latest version from the "Releases" tab, according to your game bitness (x32 or x64)
+Download discord-rpc for windows from here: https://github.com/discord/discord-rpc/releases/tag/v3.4.0
+Place discord-rpc.dll for your game bitness in your GarrysMod folder, near gmod.exe
+Place the lua folder in your garrysmod root directory
+Launch discord & garry's mod
+Connect to the server
+Enjoy!
 ```
 
-playing on a server without any related gmsv modules installed:
-![image](https://github.com/user-attachments/assets/1d28f0a7-b69f-45ec-b169-19a0fa9c815a)
-
+# Compiling
+```
+Download the latest premake5 and add it to your PATH
+Clone danielga's garrysmod_common: https://github.com/danielga/garrysmod_common (don't forget --recurse-submodules option!)
+Run "premake5.exe --gmcommon=./path/to/garrysmod_common vs2022" in your project directory
+Open the generated project in Visual Studio
+Compile
+```
 

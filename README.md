@@ -1,4 +1,4 @@
-# Garry's Mod RPC
+# Garry's Mod Discord RPC
 A Garry's Mod binary module that introduces advanced discord's RPC support on any server for any client.
 
 Playing on a random DarkRP server:

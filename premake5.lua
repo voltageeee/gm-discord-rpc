@@ -16,7 +16,7 @@ CreateWorkspace({
     allow_debug = true,
 })
 
-CreateProject({serverside = false})
+CreateProject({serverside = true})
 
 includedirs("./source/includes/discord")
 libdirs("./source/libs")

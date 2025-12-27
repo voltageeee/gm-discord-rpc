@@ -5,14 +5,7 @@ Playing on a random DarkRP server:
 
 ![image](https://github.com/user-attachments/assets/d23b567c-25e7-4f54-96d7-d4035622fa04)
 
-This module works by listening for such events as server_spawn and client_disconnect in order to set the discord rich presence information respectively.
-
-It was very dumb of me to not think about this when I initially began developing this module. Thanks to wholecream in the Garry's Mod discord server for reminding me about that possibility.
-
-![image](https://github.com/user-attachments/assets/c1b9ea54-d8be-4da0-a2bc-3e9054891573)
-
-
-This module is also made with danielga's garrysmod_common:
+This module is made with danielga's garrysmod_common:
 
 https://github.com/danielga/garrysmod_common
 
